@@ -1,9 +1,12 @@
 #include "memory.h"
 #include "heap.h"
 #include "hash.h"
+#include "graph.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+extern Graph proc_graph;
 
 static char map_buffer[1024];
 
@@ -24,12 +27,15 @@ int memory_allocate_auto(size_t size) {
 
 int memory_free_pid(int pid) {
     Block *blk = hash_lookup(pid);
-    if (blk) {
-        heap_free(pid);
-        hash_delete(pid);
-        return 0;
-    }
-    return -1;
+    if (!blk) return -1;
+
+    printf("Deallocating process %d and its children (if any):\n", pid);
+    graph_free_children(&proc_graph, pid);
+
+    heap_free(pid);
+    hash_delete(pid);
+    printf("Process %d deallocated successfully.\n", pid);
+    return 0;
 }
 
 void memory_compact(void) {
