@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Memory Manager Dashboard</title>
+<style>
+body {
+    font-family: "Poppins", sans-serif;
+    background: linear-gradient(135deg, #74b9ff, #a29bfe);
+    padding: 30px;
+    color: white;
+}
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    max-width: 900px;
+    margin: auto;
+}
+.box {
+    background: white;
+    color: #2d3436;
+    padding: 20px;
+    border-radius: 15px;
+}
+input, button { 
+    padding: 8px; 
+    margin-top: 8px; 
+    width: 80%; 
+    border-radius: 8px; 
+    border: 1px solid #0984e3; 
+}
+button { 
+    background: #0984e3; 
+    color: white; 
+    font-weight: 500; 
+    cursor: pointer; 
+}
+pre { 
+    background: #f5f6fa; 
+    padding: 10px; 
+    border-radius: 8px; 
+    overflow-x: auto; 
+    color: #2d3436; 
+    margin-top: 10px; 
+    white-space: pre-wrap; 
+}
+h2 { margin-bottom: 10px; }
+
+/* Memory Bar */
+.memory-bar {
+    display: flex;
+    height: 25px;
+    margin-top: 10px;
+    border-radius: 5px;
+    overflow: hidden;
+    border: 1px solid #ccc;
+}
+.block {
+    height: 100%;
+    text-align: center;
+    line-height: 25px;
+    font-size: 12px;
+    color: white;
+    transition: width 0.4s ease;
+}
+.block.allocated { background-color: #0984e3; }
+.block.free { background-color: #b2bec3; color: #2d3436; }
+</style>
+</head>
+
+<body>
+<div class="container">
+    <h1>🧠 Memory Manager Dashboard</h1>
+
+    <!-- Allocate -->
+    <div class="box">
+        <h2>Allocate Memory</h2>
+        <form method="POST">
+            <input type="number" name="size" placeholder="Enter size (KB)" required>
+            <button name="allocate_submit">Allocate</button>
+        </form>
+        {% if outputs.allocate %}
+        <pre>{{ outputs.allocate }}</pre>
+        {% endif %}
+    </div>
+
+    <!-- Deallocate -->
+    <div class="box">
+        <h2>Deallocate Process</h2>
+        <form method="POST">
+            <input type="number" name="pid" placeholder="Enter PID" required>
+            <button name="deallocate_submit">Deallocate</button>
+        </form>
+        {% if outputs.deallocate %}
+        <pre>{{ outputs.deallocate }}</pre>
+        {% endif %}
+    </div>
+
+    <!-- Compact -->
+    <div class="box">
+        <h2>Compact Memory</h2>
+        <form method="POST">
+            <button name="compact_submit">Compact</button>
+        </form>
+        {% if outputs.compact %}
+        <pre>{{ outputs.compact }}</pre>
+        {% endif %}
+    </div>
+
+    <!-- Relation -->
+    <div class="box">
+        <h2>Add Process Relationship</h2>
+        <form method="POST">
+            <input type="number" name="from_pid" placeholder="Parent PID" required>
+            <input type="number" name="to_pid" placeholder="Child PID" required>
+            <button name="relation_submit">Add Relation</button>
+        </form>
+        {% if outputs.relation %}
+        <pre>{{ outputs.relation }}</pre>
+        {% endif %}
+    </div>
+
+    <!-- Graph -->
+    <div class="box">
+        <h2>Process Graph</h2>
+        <form method="POST">
+            <button name="graph_submit">Show Graph</button>
+        </form>
+        {% if outputs.graph %}
+        <pre>{{ outputs.graph }}</pre>
+        {% endif %}
+    </div>
+
+    <!-- Memory Map -->
+    <div class="box">
+        <h2>Memory Map</h2>
+        <form method="POST">
+            <button name="view_submit">View Memory</button>
+        </form>
+        {% if outputs.view %}
+        <pre>{{ outputs.view }}</pre>
+
+        <div class="memory-bar">
+            {% for b in parsed %}
+                <div class="block {{ 'allocated' if b.status.lower() == 'allocated' else 'free' }}"
+                     data-width="{{ (b.size * 100.0 / base) | round(2) }}">
+                    {% if b.status.lower() == 'allocated' %}
+                        {{ b.pid }}
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Set memory block widths dynamically (no linter complaints)
+document.querySelectorAll('.memory-bar .block').forEach(block => {
+    const width = block.dataset.width;
+    if (width) block.style.width = width + '%';
+});
+</script>
+
+</body>
+</html>
