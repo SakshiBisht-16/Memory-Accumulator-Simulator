@@ -1,65 +1,86 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for
 import subprocess
 import os
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24)
+PROJECT_PATH = "/Users/sakshibisht/Documents/project"
+BACKEND = os.path.join(PROJECT_PATH, "backend_main")
 
-BACKEND = "./backend_main"
 
-def run_backend(cmd_args):
-    """Run backend_main with args and return stdout/stderr."""
+def run_cmd(args):
     try:
-        proc = subprocess.run([BACKEND] + cmd_args, capture_output=True, text=True)
-        out = proc.stdout.strip()
-        err = proc.stderr.strip()
-        return out + ("\n" + err if err else "")
+        result = subprocess.run(
+            [BACKEND] + args,
+            cwd=PROJECT_PATH,
+            capture_output=True,
+            text=True
+        )
+        return result.stdout if result.stdout else ""
     except Exception as e:
-        return f"Backend invocation error: {e}"
+        return f"Error: {str(e)}"
+
+
+def parse_memory_map(text):
+    rows = []
+    lines = text.strip().split("\n")
+
+    for line in lines:
+        if "PID" in line or "---" in line or line.strip() == "":
+            continue
+
+        parts = line.split()
+        if len(parts) < 5:
+            continue
+
+        pid, start, end, size, status = parts
+        rows.append({
+            "pid": pid.strip(),
+            "start": start.strip(),
+            "end": end.strip(),
+            "size": size.strip(),
+            "status": status.strip()
+        })
+
+    return rows
+
 
 @app.route("/", methods=["GET", "POST"])
-def index():
+def dashboard():
     outputs = {}
-    if request.method == "POST":
-        if 'allocate_submit' in request.form:
-            size = request.form.get("size", "0")
-            outputs['allocate'] = run_backend(["allocate", size])
-        elif 'deallocate_submit' in request.form:
-            pid = request.form.get("pid", "")
-            outputs['deallocate'] = run_backend(["deallocate", pid])
-        elif 'compact_submit' in request.form:
-            outputs['compact'] = run_backend(["compact"])
-        elif 'relation_submit' in request.form:
-            from_pid = request.form.get("from_pid", "")
-            to_pid = request.form.get("to_pid", "")
-            outputs['relation'] = run_backend(["add_relation", from_pid, to_pid])
-        elif 'graph_submit' in request.form:
-            outputs['graph'] = run_backend(["show_graph"])
-        elif 'view_submit' in request.form:
-            outputs['display'] = run_backend(["display"])
-        elif 'logout_button' in request.form:
-            # explicit logout button
-            run_backend(["logout"])
-            session.clear()
-            return redirect(url_for('index'))
 
-    # Optionally display the current memory map on page load
-    current = run_backend(["display"])
-    outputs.setdefault('current', current)
+    if request.method == "POST":
+        if "allocate_submit" in request.form:
+            size = request.form.get("size")
+            outputs["allocate"] = run_cmd(["allocate", size])
+
+        elif "deallocate_submit" in request.form:
+            pid = request.form.get("pid")
+            outputs["deallocate"] = run_cmd(["deallocate", pid])
+
+        elif "compact_submit" in request.form:
+            outputs["compact"] = run_cmd(["compact"])
+
+        elif "relation_submit" in request.form:
+            from_pid = request.form.get("from_pid")
+            to_pid = request.form.get("to_pid")
+            outputs["relation"] = run_cmd(["add_relation", from_pid, to_pid])
+
+        elif "graph_submit" in request.form:
+            outputs["graph"] = run_cmd(["show_graph"])
+
+        elif "view_submit" in request.form:
+            raw = run_cmd(["display"])
+            outputs["display"] = parse_memory_map(raw)
 
     return render_template("index.html", outputs=outputs)
 
-@app.route("/logout", methods=["POST"])
-def logout():
-    """
-    Called by sendBeacon() on page unload OR by explicit logout POST.
-    Must be fast and return quickly.
-    """
-    # call backend to clear saved files
-    run_backend(["logout"])
-    session.clear()
-    # send minimal response
-    return ("", 200)
+
+@app.route("/logout_action", methods=["POST"])
+def logout_action():
+    run_cmd(["logout"])
+    return redirect(url_for("dashboard"))
+
 
 if __name__ == "__main__":
     app.run(debug=True)
+
