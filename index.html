@@ -1,93 +1,76 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Memory Manager Dashboard</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "memory_manager.h"
 
-<body>
-<div class="container">
-    <h1>🧠 Memory Manager Dashboard</h1>
+extern Heap heap;
+extern Graph proc_graph;
+extern int pid_counter;
 
-    <!-- Allocate -->
-    <div class="block">
-        <h3>Allocate Memory</h3>
-        <form method="POST">
-            <input type="number" name="size" placeholder="Enter size (KB)" required>
-            <button type="submit" name="allocate_submit">Allocate</button>
-        </form>
-    </div>
+#define HEAP_FILE "/Users/sakshibisht/Documents/project/heap_state.dat"
+#define GRAPH_FILE "/Users/sakshibisht/Documents/project/graph_state.dat"
 
-    <!-- Deallocate -->
-    <div class="block">
-        <h3>Deallocate Memory</h3>
-        <form method="POST">
-            <input type="number" name="pid" placeholder="Enter PID" required>
-            <button type="submit" name="deallocate_submit">Deallocate</button>
-        </form>
-    </div>
-
-    <!-- Compact -->
-    <div class="block">
-        <h3>Compact Memory</h3>
-        <form method="POST">
-            <button type="submit" name="compact_submit">Compact</button>
-        </form>
-    </div>
-
-    <!-- Relation -->
-    <div class="block">
-        <h3>Add Process Relation</h3>
-        <form method="POST">
-            <input type="number" name="from_pid" placeholder="Parent PID" required>
-            <input type="number" name="to_pid" placeholder="Child PID" required>
-            <button type="submit" name="relation_submit">Add Relation</button>
-        </form>
-    </div>
-
-    <!-- Show Graph -->
-    <div class="block">
-        <h3>Process Graph</h3>
-        <form method="POST">
-            <button type="submit" name="graph_submit">Show Graph</button>
-        </form>
-    </div>
-
-    <!-- View Memory -->
-    <div class="block">
-        <h3>View Memory Map</h3>
-        <form method="POST">
-            <button type="submit" name="view_submit">View Memory</button>
-        </form>
-    </div>
-
-    <!-- Logout -->
-    <div class="block">
-        <form method="POST">
-            <button type="submit" name="logout_button">Logout</button>
-        </form>
-    </div>
-
-    <div class="output">
-        {% for key, value in outputs.items() %}
-            <h3>{{ key|capitalize }} Output:</h3>
-            <pre>{{ value }}</pre>
-        {% endfor %}
-    </div>
-</div>
-
-<script>
-/* Send logout to server when the page is closed / refreshed / navigated away.
-   sendBeacon is non-blocking and suitable for this purpose.
-*/
-window.addEventListener("beforeunload", function (event) {
-    try {
-        navigator.sendBeacon("/logout");
-    } catch (e) {
-        // fallback: synchronous XHR (not recommended), but we ignore errors
+int main(int argc, char *argv[]) {
+    if (argc < 2) {
+        printf("Usage: ./backend_main <command> [args]\n");
+        return 1;
     }
-});
-</script>
-</body>
-</html>
+
+    load_heap(HEAP_FILE);
+    load_graph(GRAPH_FILE);
+
+    if (!heap.head) {
+        heap_init();
+    }
+
+    if (strcmp(argv[1], "allocate") == 0 && argc == 3) {
+        size_t size = atoi(argv[2]);
+        int pid = memory_allocate_auto(size);
+        if (pid != -1) printf("✅ Allocated %zuKB to PID %d\n", size, pid);
+        else printf("❌ Allocation failed\n");
+        save_heap(HEAP_FILE);
+        save_graph(GRAPH_FILE);
+        display_memory();
+    } 
+    else if (strcmp(argv[1], "deallocate") == 0 && argc == 3) {
+        int pid = atoi(argv[2]);
+        if (memory_free_pid(pid) == -1)
+            printf("⚠ PID %d not found\n", pid);
+        else
+            printf("🗑 Deallocated PID %d\n", pid);
+        save_heap(HEAP_FILE);
+        save_graph(GRAPH_FILE);
+        display_memory();
+    }
+    else if (strcmp(argv[1], "compact") == 0) {
+        memory_compact();
+        printf("🧹 Memory compacted.\n");
+        save_heap(HEAP_FILE);
+        save_graph(GRAPH_FILE);
+        display_memory();
+    }
+    else if (strcmp(argv[1], "display") == 0) {
+        display_memory();
+    }
+    else if (strcmp(argv[1], "add_relation") == 0 && argc == 4) {
+        int from = atoi(argv[2]);
+        int to = atoi(argv[3]);
+        graph_add_edge(&proc_graph, from, to);
+        save_graph(GRAPH_FILE);
+        printf("🔗 Added relation %d -> %d\n", from, to);
+    }
+    else if (strcmp(argv[1], "show_graph") == 0) {
+        graph_display(&proc_graph);
+    }
+    else if (strcmp(argv[1], "logout") == 0) {
+        reset_system();
+        printf("🔒 Session cleared.\n");
+        save_heap(HEAP_FILE);
+        save_graph(GRAPH_FILE);
+    }
+    else {
+        printf("❌ Invalid command.\n");
+    }
+
+    return 0;
+}
