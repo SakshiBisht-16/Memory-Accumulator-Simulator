@@ -9,6 +9,8 @@
 typedef struct Block {
     int pid;
     size_t size;
+    size_t start;
+    size_t end;
     int allocated;
     struct Block *next;
 } Block;
