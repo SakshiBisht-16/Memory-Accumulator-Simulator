@@ -3,10 +3,6 @@
 #include <string.h>
 #include "memory_manager.h"
 
-extern Heap heap;
-extern Graph proc_graph;
-extern int pid_counter;
-
 #define HEAP_FILE "/Users/sakshibisht/Documents/project/heap_state.dat"
 #define GRAPH_FILE "/Users/sakshibisht/Documents/project/graph_state.dat"
 
@@ -26,8 +22,10 @@ int main(int argc, char *argv[]) {
     if (strcmp(argv[1], "allocate") == 0 && argc == 3) {
         size_t size = atoi(argv[2]);
         int pid = memory_allocate_auto(size);
-        if (pid != -1) printf("✅ Allocated %zuKB to PID %d\n", size, pid);
-        else printf("❌ Allocation failed\n");
+        if (pid != -1)
+            printf("✅ Allocated %zuKB to PID %d\n", size, pid);
+        else
+            printf("❌ Allocation failed\n");
         save_heap(HEAP_FILE);
         save_graph(GRAPH_FILE);
         display_memory();
@@ -44,7 +42,7 @@ int main(int argc, char *argv[]) {
     }
     else if (strcmp(argv[1], "compact") == 0) {
         memory_compact();
-        printf("🧹 Memory compacted.\n");
+        printf("🧹 Memory compacted successfully.\n");
         save_heap(HEAP_FILE);
         save_graph(GRAPH_FILE);
         display_memory();
