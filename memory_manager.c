@@ -10,7 +10,6 @@ int pid_counter = 1;
 #define HEAP_FILE "/Users/sakshibisht/Documents/project/heap_state.dat"
 #define GRAPH_FILE "/Users/sakshibisht/Documents/project/graph_state.dat"
 
-/* ------------------ HASH TABLE FOR PID LOOKUP ------------------ */
 
 HashNode *pid_table[HASH_SIZE] = { NULL };
 
@@ -71,7 +70,6 @@ void pid_table_clear(void) {
     }
 }
 
-/* ------------------ BST FOR FREE BLOCKS (by size) ------------------ */
 
 BSTNode *free_bst_root = NULL;
 
@@ -183,7 +181,7 @@ Block *bst_find_best_fit(size_t requested_size) {
     return best ? best->block : NULL;
 }
 
-/* ------------------ HEAP FUNCTIONS ------------------ */
+
 
 void heap_init(void) {
     Block *c = heap.head;
@@ -361,7 +359,7 @@ void display_memory(void) {
     printf("-------------------------------------------------------\n");
 }
 
-/* ------------------ SAVE / LOAD HEAP ------------------ */
+
 
 void save_heap(const char *filename) {
     FILE *fp = fopen(filename, "wb");
@@ -430,7 +428,6 @@ void load_heap(const char *filename) {
     }
 }
 
-/* ------------------ GRAPH FUNCTIONS ------------------ */
 
 void graph_init(Graph *g) {
     for (int i = 0; i < MAX_PROCESSES; i++)
@@ -496,8 +493,6 @@ void load_graph(const char *filename) {
 
     fclose(fp);
 }
-
-/* ------------------ SYSTEM RESET ------------------ */
 
 void reset_system(void) {
     Block *c = heap.head;
