@@ -1,10 +1,13 @@
 # Memory-Accumulator-Simulator
-The Memory Accumulator Simulator is a C-based project designed to replicate core features of an operating system’s memory management system.
-It supports dynamic allocation and deallocation of memory for multiple processes, each assigned a unique PID for identification and tracking.
-Memory is organized as a linked list of blocks, storing key attributes such as start address, size, and free/allocated status.
-A Binary Search Tree (BST) is used to implement the Best-Fit allocation strategy, ensuring efficient space utilization by selecting the smallest suitable free block.
-A hash table provides constant-time lookup for PID-to-block mapping, enabling fast access and deletion operations.
-A graph structure represents parent–child process relationships, supporting cascading deallocation so that freeing a parent automatically frees all dependent child processes.
-A memory compaction mechanism reorganizes occupied blocks to eliminate gaps and minimize fragmentation, maintaining optimal use of the simulated memory space.
-The system offers a clear and structured memory map display, showing start addresses, block sizes, and free/allocated status in an easy-to-read format.
-The overall design provides an interactive and educational simulation of memory allocation strategies, process relationships, fragmentation behavior, and space optimization in modern operating systems.
+
+A C-based simulator demonstrating operating system memory management through dynamic process allocation and deallocation.
+
+## Features
+- Best-Fit memory allocation using a Binary Search Tree  
+- Linked list representation of memory blocks  
+- Hash table for fast PID lookup  
+- Graph-based process hierarchy with cascading deallocation  
+- Memory compaction and memory map visualization  
+
+## Tech
+C | Linked Lists | BST | Hash Tables | Graphs
